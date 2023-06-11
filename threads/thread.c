@@ -218,7 +218,7 @@ tid_t thread_create(const char *name, int priority,
 	{
 		return TID_ERROR;
 	}
-
+	
 	/* Add to run queue. */
 	thread_unblock(t);
 	// preemtive - 조건 확인 잘하기

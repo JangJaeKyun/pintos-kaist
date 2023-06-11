@@ -30,7 +30,7 @@ typedef int tid_t;
 #define PRI_MAX 63                      /* Highest priority. */
 
 // 파일 디스크립터 크기
-// #define FDT_PAGES 2
+#define FDT_PAGES 3
 #define FDT_COUNT_LIMIT 128
 
 /* A kernel thread or user process.
@@ -120,6 +120,7 @@ struct thread {
 	struct semaphore load_sema;			/* 로드 확인 */
 	struct semaphore exit_sema;			/* 종료 확인 */
 	struct semaphore wait_sema;			/* 기다림 확인 */
+	struct semaphore sema;
 
 #ifdef USERPROG
 	/* Owned by userprog/process.c. */

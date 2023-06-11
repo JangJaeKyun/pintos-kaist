@@ -851,13 +851,12 @@ void process_close_file(int fd)
 /*
  * fd가 가리키는 파일 반환하는 함수
  */
-struct file *process_get_file(int fd)
-{
-	struct file **fdt = thread_current()->fdt;
+struct file* process_get_file(int fd) {
+    struct file **fdt = thread_current()->fdt;
 
-	if (fd < 2 || fd >= FDT_COUNT_LIMIT)
-	{
-		return NULL;
-	}
-	return fdt[fd];
+    if (fd < 0 || fd >= FDT_COUNT_LIMIT) {
+        return NULL;
+    }
+
+    return fdt[fd];
 }

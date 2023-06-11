@@ -16,6 +16,7 @@ struct thread *get_child_process(tid_t child_tid);
 // 파일 디스크립터를 위한 함수
 int process_add_file(struct file *f);
 void process_close_file(int fd);
+
 struct file *process_get_file(int fd);
 
 #endif /* userprog/process.h */
