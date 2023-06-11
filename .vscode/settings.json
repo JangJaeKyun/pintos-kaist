@@ -1,0 +1,20 @@
+{
+    "files.associations": {
+        "__threading_support": "c",
+        "__availability": "c",
+        "__bit_reference": "c",
+        "__config": "c",
+        "__hash_table": "c",
+        "algorithm": "c",
+        "bitset": "c",
+        "functional": "c",
+        "locale": "c",
+        "string": "c",
+        "string_view": "c",
+        "unordered_map": "c",
+        "__string": "c",
+        "cstdlib": "c",
+        "*.inc": "c",
+        "ostream": "c"
+    }
+}

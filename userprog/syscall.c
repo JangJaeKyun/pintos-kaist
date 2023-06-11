@@ -266,7 +266,7 @@ int write (int fd, const void *buffer, unsigned size) {
 		}
 		lock_acquire(&filesys_lock);
 		result = file_write(f, buffer, size);
-		lock_acquire(&filesys_lock);
+		lock_release(&filesys_lock);
 	}
 	return result;
 }
@@ -305,5 +305,5 @@ void close (int fd) {
 		return;
 	}
 	file_close(f);
-	process_close_file(f); // fdt에서 제거하기
+	process_close_file(fd); // fdt에서 제거하기
 }
