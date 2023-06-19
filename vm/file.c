@@ -25,7 +25,7 @@ file_backed_initializer (struct page *page, enum vm_type type, void *kva) {
 	/* Set up the handler */
 	page->operations = &file_ops;
 
-	struct file_page *file_page = &page->file;
+	struct file_page *file_page = &page->file; 
 }
 
 /* Swap in the page by read contents from the file. */
