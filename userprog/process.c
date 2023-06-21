@@ -65,7 +65,6 @@ process_create_initd (const char *file_name) {
 static void
 initd (void *f_name) {
 #ifdef VM
-	// printf ("Cx 왜안돼\n");
 	supplemental_page_table_init (&thread_current ()->spt);
 #endif
 
@@ -695,7 +694,7 @@ bool lazy_load_segment(struct page *page, void *aux)
  * - READ_BYTES bytes at UPAGE must be read from FILE
  * starting at offset OFS.
  *
- * - ZERO_BYTES bytes at UPAGE + READ_BYTES must be zeroed.
+ * - ZERO_BYTES bytes at UPAGE + READ_BYTES must be zeroed.#include "lib/kernel/stdio.h"
  *
  * The pages initialized by this function must be writable by the
  * user process if WRITABLE is true, read-only otherwise.
