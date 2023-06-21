@@ -7,6 +7,7 @@
 #include "userprog/gdt.h"
 #include "threads/flags.h"
 #include "intrinsic.h"
+#include "lib/stdio.h"
 
 //추가 헤더파일
 #include "threads/synch.h"
@@ -15,6 +16,7 @@
 #include "filesys/file.h"
 #include "devices/input.h"
 #include "threads/palloc.h"
+#include "vm/vm.h"
 
 
 void syscall_entry (void);
@@ -134,9 +136,9 @@ void check_address(void *addr) {
 	if (!is_user_vaddr(addr)) { //유저 영역에 속해있지 않을 경우
 		exit(-1);
 	}
-	if(pml4_get_page(thread_current()->pml4, addr) == NULL) {
-		exit(-1);
-	}
+	// if(pml4_get_page(thread_current()->pml4, addr) == NULL) {
+	// 	exit(-1);
+	// }
 }
 
 // 운영체제를 중지한다.
@@ -216,35 +218,48 @@ int filesize (int fd) {
 }
 
 // 파일 읽기
-int read(int fd, void *buffer, unsigned size){
-    check_address(buffer);
-	char *ptr = (char *)buffer;
-	int result = 0;
+int read(int fd, void *buffer, unsigned size)
+{
+	check_address(buffer);
 
-	if(fd == 0) {
-		for (int i = 0; i < size; i++) {
-			char ch = input_getc();
-			if(ch == '\n') {
-				break;
-			}
-			*ptr = ch;
-			ptr++;
-			result++;
+	char *ptr = (char *)buffer;
+	int bytes_read = 0;
+
+	lock_acquire(&filesys_lock);
+	if (fd == STDIN_FILENO)
+	{
+		for (int i = 0; i < size; i++)
+		{
+			*ptr++ = input_getc();
+			bytes_read++;
 		}
-	}
-	else if (fd == 1) {
-		return -1;
-	}
-	else {
-		struct file *f = process_get_file(fd);
-		if(f == NULL) {
-			return -1;
-		}
-		lock_acquire(&filesys_lock);
-		result = file_read(f, buffer, size);
 		lock_release(&filesys_lock);
 	}
-	return result;
+	else
+	{
+		if (fd < 2)
+		{
+
+			lock_release(&filesys_lock);
+			return -1;
+		}
+		struct file *file = process_get_file(fd);
+		if (file == NULL)
+		{
+
+			lock_release(&filesys_lock);
+			return -1;
+		}
+		struct page *page = spt_find_page(&thread_current()->spt, buffer);
+		if (page && !page->writable)
+		{
+			lock_release(&filesys_lock);
+			exit(-1);
+		}
+		bytes_read = file_read(file, buffer, size);
+		lock_release(&filesys_lock);
+	}
+	return bytes_read;
 }
 
 // 파일 쓰기
