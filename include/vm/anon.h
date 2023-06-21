@@ -4,7 +4,9 @@
 struct page;
 enum vm_type;
 
-struct anon_page {
+struct anon_page
+{
+    uint32_t slot_no;
 };
 
 void vm_anon_init (void);

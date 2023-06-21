@@ -18,19 +18,34 @@ static const struct page_operations anon_ops = {
 };
 
 /* Initialize the data for anonymous pages */
-void
-vm_anon_init (void) {
+void vm_anon_init(void)
+{
 	/* TODO: Set up the swap_disk. */
-	swap_disk = NULL;
+	swap_disk = disk_get(1, 1);
+	list_init(&swap_table);
+	lock_init(&swap_table_lock);
+
+	disk_sector_t swap_size = disk_size(swap_disk) / 8;
+	for (disk_sector_t i = 0; i < swap_size; i++)
+	{
+		struct slot *slot = (struct slot *)malloc(sizeof(struct slot));
+		slot->page = NULL;
+		slot->slot_no = i;
+		lock_acquire(&swap_table_lock);
+		list_push_back(&swap_table, &slot->swap_elem);
+		lock_release(&swap_table_lock);
+	}
 }
 
 /* Initialize the file mapping */
-bool
-anon_initializer (struct page *page, enum vm_type type, void *kva) {
+bool anon_initializer(struct page *page, enum vm_type type, void *kva)
+{
 	/* Set up the handler */
 	page->operations = &anon_ops;
 
 	struct anon_page *anon_page = &page->anon;
+	anon_page->slot_no = -1;
+	return true;
 }
 
 /* Swap in the page by read contents from the swap disk. */

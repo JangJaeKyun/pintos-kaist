@@ -1,9 +1,5 @@
 {
     "files.associations": {
-<<<<<<< HEAD
-=======
-<<<<<<< JangJaeKyun
->>>>>>> 0a9ac2f13419f077f96463dd2f1a26d01ace8b32
         "__threading_support": "c",
         "__availability": "c",
         "__bit_reference": "c",
@@ -19,6 +15,7 @@
         "__string": "c",
         "cstdlib": "c",
         "*.inc": "c",
-        "ostream": "c"
+        "ostream": "c",
+        "timer.h": "c"
     }
 }
