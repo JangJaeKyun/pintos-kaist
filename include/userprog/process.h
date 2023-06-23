@@ -2,7 +2,7 @@
 #define USERPROG_PROCESS_H
 
 #include "threads/thread.h"
-#include "filesys/off_t.h"
+#include "vm/vm.h"
 
 bool lazy_load_segment(struct page *page, void *aux);
 tid_t process_create_initd (const char *file_name);
