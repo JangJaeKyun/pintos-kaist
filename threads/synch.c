@@ -208,39 +208,42 @@ void lock_acquire(struct lock *lock)
 	ASSERT(!intr_context());
 	ASSERT(!lock_held_by_current_thread(lock));
 
-	struct thread *curr = thread_current();
+	if (!lock_held_by_current_thread(lock)) {
+        // lock을 소유하고 있지 않을 경우에만 lock_acquire() 함수를 호출합니다.
+        struct thread *curr = thread_current();
 
-	// if the lock is not available
-	if (lock->holder != NULL) { 
-		curr->wait_on_lock = lock;
-		//lock을 잡고있는 스레드의 원래 우선순위보다 큰 경우
-		if (curr->priority > lock->holder->origin_priority) {
-			// waiters의 값이 처음 입력되는경우 = donation list에도 현재 lock에 대한 값이 없다.
-			if (list_empty(&lock->semaphore.waiters)) {
-				list_push_back(&lock->holder->donations, &curr->donation_elem); // add current thread into donation list.
-			} 
-			//waiters에 값이 존재 = donation list에 현재 lock에 대한 값 존재
-			// 현재 스레드의 우선순위가 waiters의 가장 높은 우선순위보다 높으면 donation 안에 값을 바꿔줘야한다.
-			else if (list_entry(list_front(&lock->semaphore.waiters), struct thread, elem)->priority < curr->priority) {
-				struct list_elem *e;
-				//donation list를 탐색
-				for (e = list_begin(&lock->holder->donations); e != list_end(&lock->holder->donations); e = list_next(e)) {
-					struct thread *t = list_entry(e, struct thread, donation_elem);
-					// 받아온 락이 wait_on_lock일경우
-					if (lock == t->wait_on_lock) {
-						list_remove(&t->donation_elem);
-						// insert current thread in the donation list before the thread with lower priority
-						list_insert_ordered(&t->donations, &curr->donation_elem, donation_sort, NULL);
-						break;
-					}
-				}
-			}
-			donate_priority();
-		}
-	}
-	sema_down(&lock->semaphore);
-	lock->holder = curr;
-	curr->wait_on_lock = NULL;
+        // if the lock is not available
+        if (lock->holder != NULL) { 
+            curr->wait_on_lock = lock;
+            //lock을 잡고있는 스레드의 원래 우선순위보다 큰 경우
+            if (curr->priority > lock->holder->origin_priority) {
+                // waiters의 값이 처음 입력되는경우 = donation list에도 현재 lock에 대한 값이 없다.
+                if (list_empty(&lock->semaphore.waiters)) {
+                    list_push_back(&lock->holder->donations, &curr->donation_elem); // add current thread into donation list.
+                } 
+                //waiters에 값이 존재 = donation list에 현재 lock에 대한 값 존재
+                // 현재 스레드의 우선순위가 waiters의 가장 높은 우선순위보다 높으면 donation 안에 값을 바꿔줘야한다.
+                else if (list_entry(list_front(&lock->semaphore.waiters), struct thread, elem)->priority < curr->priority) {
+                    struct list_elem *e;
+                    //donation list를 탐색
+                    for (e = list_begin(&lock->holder->donations); e != list_end(&lock->holder->donations); e = list_next(e)) {
+                        struct thread *t = list_entry(e, struct thread, donation_elem);
+                        // 받아온 락이 wait_on_lock일경우
+                        if (lock == t->wait_on_lock) {
+                            list_remove(&t->donation_elem);
+                            // insert current thread in the donation list before the thread with lower priority
+                            list_insert_ordered(&t->donations, &curr->donation_elem, donation_sort, NULL);
+                            break;
+                        }
+                    }
+                }
+                donate_priority();
+            }
+        }
+        sema_down(&lock->semaphore);
+        lock->holder = curr;
+        curr->wait_on_lock = NULL;
+    }
 }
 
 /* Tries to acquires LOCK and returns true if successful or false

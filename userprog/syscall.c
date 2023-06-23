@@ -124,6 +124,12 @@ syscall_handler (struct intr_frame *f UNUSED) {
 	default:
 		exit(-1);
 		break;
+	case SYS_MMAP:
+		f->R.rax = mmap(f->R.rdi, f->R.rsi, f->R.rdx, f->R.r10, f->R.r8);
+		break;
+	case SYS_MUNMAP:
+		munmap(f->R.rdi);
+		break;
 	}
 	// printf("system call!\n");
 	// thread_exit ();
@@ -185,9 +191,13 @@ int wait (int pid) {
 }
 
 // 파일 생성
-bool create (const char *file, unsigned initial_size) {
-	check_address(file); //유저 영역의 주소인지 확인
-	return filesys_create(file, initial_size);
+bool create(const char *file, unsigned initial_size)
+{
+	lock_acquire(&filesys_lock);
+	check_address(file);
+	bool success = filesys_create(file, initial_size);
+	lock_release(&filesys_lock);
+	return success;
 }
 
 // 파일 삭제
@@ -197,17 +207,20 @@ bool remove (const char *file) {
 }
 
 // 파일 열기
-int open (const char *file) {
-	check_address(file);
-	struct file *f = filesys_open(file);
-	if(f == NULL) {
+int open(const char *file_name)
+{
+	check_address(file_name);
+	lock_acquire(&filesys_lock);
+	struct file *file = filesys_open(file_name);
+	if (file == NULL)
+	{
+		lock_release(&filesys_lock);
 		return -1;
 	}
-	//파일 디스크립터 생성하기
-	int fd = process_add_file(f);
-	if(fd == -1) {
-		file_close(f);
-	}
+	int fd = process_add_file(file);
+	if (fd == -1)
+		file_close(file);
+	lock_release(&filesys_lock);
 	return fd;
 }
 
@@ -327,4 +340,33 @@ void close (int fd) {
 	}
 	file_close(f);
 	process_close_file(fd); // fdt에서 제거하기
+}
+
+void *mmap(void *addr, size_t length, int writable, int fd, off_t offset)
+{
+	if (!addr || addr != pg_round_down(addr))
+		return NULL;
+
+	if (offset != pg_round_down(offset))
+		return NULL;
+
+	if (!is_user_vaddr(addr) || !is_user_vaddr(addr + length))
+		return NULL;
+
+	if (spt_find_page(&thread_current()->spt, addr))
+		return NULL;
+
+	struct file *f = process_get_file(fd);
+	if (f == NULL)
+		return NULL;
+
+	if (file_length(f) == 0 || (int)length <= 0)
+		return NULL;
+
+	return do_mmap(addr, length, writable, f, offset); // 파일이 매핑된 가상 주소 반환
+}
+
+void munmap(void *addr)
+{
+	do_munmap(addr);
 }
