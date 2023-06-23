@@ -16,6 +16,9 @@
         "cstdlib": "c",
         "*.inc": "c",
         "ostream": "c",
-        "timer.h": "c"
+        "timer.h": "c",
+        "istream": "c",
+        "thread.h": "c",
+        "process.h": "c"
     }
 }

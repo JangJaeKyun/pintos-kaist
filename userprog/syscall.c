@@ -40,6 +40,8 @@ void seek(int fd, unsigned position);
 unsigned tell(int fd);
 void close(int fd);
 
+void *mmap(void *addr, size_t length, int writable, int fd, off_t offset);
+void munmap(void *addr);
 /* System call.
  *
  * Previously system call services was handled by the interrupt handler
@@ -75,6 +77,7 @@ void
 syscall_handler (struct intr_frame *f UNUSED) {
 	// TODO: Your implementation goes here.
 	int sys_num = f->R.rax; //syscall number
+	thread_current()->rsp=f->rsp; 
 	switch (sys_num) {
 	case SYS_HALT:
 		halt();
@@ -250,15 +253,18 @@ int read(int fd, void *buffer, unsigned size)
 			lock_release(&filesys_lock);
 			return -1;
 		}
+
 		struct page *page = spt_find_page(&thread_current()->spt, buffer);
 		if (page && !page->writable)
 		{
 			lock_release(&filesys_lock);
 			exit(-1);
 		}
+
 		bytes_read = file_read(file, buffer, size);
 		lock_release(&filesys_lock);
 	}
+
 	return bytes_read;
 }
 

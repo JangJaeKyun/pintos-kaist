@@ -118,10 +118,31 @@ spt_remove_page (struct supplemental_page_table *spt, struct page *page) {
 
 /* Get the struct frame, that will be evicted. */
 static struct frame *
-vm_get_victim (void) {
+vm_get_victim(void)
+{
 	struct frame *victim = NULL;
-	 /* TODO: The policy for eviction is up to you. */
+	/* TODO: The policy for eviction is up to you. */
+	struct thread *curr = thread_current();
 
+	lock_acquire(&frame_table_lock);
+	struct list_elem *start = list_begin(&frame_table);
+	for (start; start != list_end(&frame_table); start = list_next(start))
+	{
+		victim = list_entry(start, struct frame, frame_elem);
+		if (victim->page == NULL) // frame에 할당된 페이지가 없는 경우 (page가 destroy된 경우 )
+		{
+			lock_release(&frame_table_lock);
+			return victim;
+		}
+		if (pml4_is_accessed(curr->pml4, victim->page->va))
+			pml4_set_accessed(curr->pml4, victim->page->va, 0);
+		else
+		{
+			lock_release(&frame_table_lock);
+			return victim;
+		}
+	}
+	lock_release(&frame_table_lock);
 	return victim;
 }
 
@@ -131,8 +152,9 @@ static struct frame *
 vm_evict_frame (void) {
 	struct frame *victim UNUSED = vm_get_victim ();
 	/* TODO: swap out the victim and return the evicted frame. */
-
-	return NULL;
+	if (victim->page)
+		swap_out(victim->page);
+	return victim;
 }
 
 /* palloc() and get frame. If there is no available page, evict the page
@@ -165,8 +187,9 @@ vm_get_frame (void) {
 }
 
 /* Growing the stack. */
-static void
+static void 
 vm_stack_growth (void *addr UNUSED) {
+	vm_alloc_page(VM_ANON | VM_MARKER_0, pg_round_down(addr), 1);
 }
 
 /* Handle the fault on write_protected page */
@@ -194,9 +217,11 @@ vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr UNUSED,
 			rsp = thread_current()->rsp;
 
 		if ((USER_STACK - (1 << 20) <= rsp - 8 && rsp - 8 == addr && addr <= USER_STACK) || (USER_STACK - (1 << 20) <= rsp && rsp <= addr && addr <= USER_STACK))
-			vm_stack_growth(addr);
-
+					
+		vm_stack_growth(addr);
+		
 		page = spt_find_page(spt, addr);
+
 		if (page == NULL)
 			return false;
 		if (write == 1 && page->writable == 0)
@@ -264,7 +289,7 @@ bool supplemental_page_table_copy(struct supplemental_page_table *dst UNUSED, st
 
 		/* 1) type이 uninit이면 */
 		if (type == VM_UNINIT)
-		{ // uninit page 생성 & 초기화
+		{
 			vm_initializer *init = src_page->uninit.init;
 			void *aux = src_page->uninit.aux;
 			vm_alloc_page_with_initializer(VM_ANON, upage, writable, init, aux);

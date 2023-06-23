@@ -87,7 +87,7 @@ file_read_at (struct file *file, void *buffer, off_t size, off_t file_ofs) {
 }
 
 /* Writes SIZE bytes from BUFFER into FILE,
- * starting at the file's current position.
+ * starting at the file's current position. 
  * Returns the number of bytes actually written,
  * which may be less than SIZE if end of file is reached.
  * (Normally we'd grow the file in that case, but file growth is
