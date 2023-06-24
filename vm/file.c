@@ -134,21 +134,10 @@ void do_munmap(void *addr)
 	struct supplemental_page_table *spt = &thread_current()->spt;
 	struct page *p = spt_find_page(spt, addr);
 	int count = p->mapped_page_count;
-	for (int i = 0; i < count; i++)
-	{
-		if (p)
+	for (int i = 0; i < count; i++) {
+		if (p) {
 			destroy(p);
-		{
-			if (pml4_get_page(thread_current()->pml4, p->va))
-				// 매핑된 프레임이 있다면 = swap out 되지 않았다면 -> 페이지를 제거하고 연결된 프레임도 제거
-				spt_remove_page(spt, p);
-			else
-			{ // swap out된 경우에는 매핑된 프레임이 없으므로 페이지만 제거
-				hash_delete(&spt->spt_hash, &p->hash_elem);
-				free(p);
-			}
 		}
-		pml4_clear_page(thread_current()->pml4, p->va);
 		addr += PGSIZE;
 		p = spt_find_page(spt, addr);
 	}
