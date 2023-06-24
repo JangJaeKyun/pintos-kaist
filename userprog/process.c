@@ -18,6 +18,7 @@
 #include "threads/mmu.h"
 #include "threads/vaddr.h"
 #include "intrinsic.h"
+#include "userprog/syscall.h"
 #ifdef VM
 #include "vm/vm.h"
 #include "userprog/syscall.h"
@@ -234,7 +235,9 @@ process_exec (void *f_name) {
 	/* ---------------------------------- */
 
 	/* And then load the binary */
+	lock_acquire(&filesys_lock);
 	success = load (file_name, &_if);
+	lock_release(&filesys_lock);
 
 	if(!success) {
 		palloc_free_page(file_name);
@@ -302,6 +305,7 @@ process_exit (void) {
 	palloc_free_page(curr->fdt);
 	file_close(curr->running);
 	process_cleanup();
+	hash_destroy(&curr->spt.spt_hash, NULL);
 	sema_up(&curr->wait_sema);
 	sema_down(&curr->exit_sema);
 }

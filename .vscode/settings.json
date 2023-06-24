@@ -19,6 +19,9 @@
         "timer.h": "c",
         "istream": "c",
         "thread.h": "c",
-        "process.h": "c"
+        "process.h": "c",
+        "atomic": "c",
+        "cstring": "c",
+        "memory": "c"
     }
 }

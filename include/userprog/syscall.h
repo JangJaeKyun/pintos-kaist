@@ -4,4 +4,6 @@
 void syscall_init(void);
 void close(int fd);
 
+struct lock filesys_lock;
+
 #endif /* userprog/syscall.h */
