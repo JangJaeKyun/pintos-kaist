@@ -75,7 +75,9 @@ void
 syscall_handler (struct intr_frame *f UNUSED) {
 	// TODO: Your implementation goes here.
 	int sys_num = f->R.rax; //syscall number
+#ifdef VM
 	thread_current()->rsp=f->rsp; 
+#endif
 	switch (sys_num) {
 	case SYS_HALT:
 		halt();
